@@ -1,0 +1,697 @@
+-- ============== [[ AUTO DF SCRIPT BY IBAY ]] ============== --
+nameworld = "uiszw" -- World tempat bot membuat Dirt Farm
+StoragePlat = "ibaymart|persija28" -- World penyimpanan platform
+worldsaveseed = "hallustrg|persija28" -- World penyimpanan seed
+
+-- ============= Jangan Diubah ============== --
+
+EditToggle("Antibounce", true)
+EditToggle("ModFly", true)
+EditToggle("Antilag", true)
+EditToggle("Fast Trash", true)
+EditToggle("Fast Drop", true)
+
+TrashID = {2, 14, 4, 10}
+SeedID = {3, 15, 5, 11}
+
+function inv(itemID)
+    for _, item in pairs(GetInventory()) do
+        if item.id == itemID then
+            return item.amount
+        end
+    end
+    return 0
+end
+
+function tnjk1_3(x, y)
+    local packet = {}
+    packet.type = 3
+    packet.state = 2592
+    packet.value = 18
+    packet.px = x
+    packet.py = y
+    packet.x = (GetLocal().posX)
+    packet.y = (GetLocal().posY)
+    SendPacketRaw(false, packet)
+end
+
+function trh1_3(x, y, id)
+    local packet = {}
+    packet.type = 3
+    packet.value = id
+    packet.px = x
+    packet.py = y
+    packet.x = (GetLocal().posX)
+    packet.y = (GetLocal().posY)
+    SendPacketRaw(false, packet)
+end
+
+function sdtr_11(object)
+    local packet = {}
+    packet.type = 11
+    packet.value = object.id
+    packet.x = object.posX
+    packet.y = object.posY
+    SendPacketRaw(false, packet)
+end
+
+function sdt_11(range)
+    for _, object in pairs(GetObjectList()) do
+        if math.abs(GetLocal().posX - object.posX) <= (32 * range) and math.abs(GetLocal().posY - object.posY) <
+            (32 * range) and inv(object.itemid) < 200 then
+            sdtr_11(object)
+            sleep(15)
+        end
+    end
+end
+
+function findEmptyTile(radius)
+    local px = GetLocal().posX // 32
+    local py = GetLocal().posY // 32
+    for x = -radius, radius do
+        for y = -radius, radius do
+            local tx = px + x
+            local ty = py + y
+            local tile = GetTile(tx, ty)
+
+            local dropCount = 0
+            if tile.drop ~= nil then
+                dropCount = #tile.drop
+            end
+
+            if tile.fg == 0 and tile.bg == 0 and dropCount == 0 then
+                return {
+                    x = tx,
+                    y = ty
+                }
+            end
+        end
+    end
+    return nil
+end
+
+function cekSeed()
+    local needDrop = false
+    for _, id in pairs(SeedID) do
+        if inv(id) >= 100 then
+            needDrop = true
+            break
+        end
+    end
+
+    if needDrop then
+        Sleep(200)
+        LogToConsole("`0[`9Ibay`0]`4 Drop Seed...")
+        Sleep(500)
+        SendPacket(3, "action|join_request\nname|" .. worldsaveseed)
+        Sleep(4000)
+
+        for _, id in pairs(SeedID) do
+            local jumlah = inv(id)
+            if jumlah >= 100 then
+
+                local emptyTile = findEmptyTile(5)
+                if emptyTile then
+                    FindPath(emptyTile.x, emptyTile.y)
+                    Sleep(1000)
+
+                    SendPacket(2, "action|drop\n|itemID|" .. id)
+                    SendPacket(2, "action|dialog_return\ndialog_name|drop_item\nitemID|" .. id .. "|\ncount|" .. jumlah)
+                    Sleep(4000)
+                else
+                    LogToConsole("`0[`9Ibay`0]`c Tidak ada posisi kosong ditemukan!")
+                end
+            end
+        end
+        SendPacket(3, "action|join_request\nname|" .. nameworld)
+        Sleep(4000)
+    end
+end
+
+function Trash()
+    for _, id in ipairs(TrashID) do
+        local jumlah = inv(id)
+        if jumlah >= 50 then
+            LogToConsole("`0[`9Ibay`0]`4 Trash Item")
+            SendPacket(2, "action|trash\n|itemID|" .. id)
+            Sleep(1000)
+            SendPacket(2, "action|dialog_return\ndialog_name|trash_item\nitemID|" .. id .. "|\ncount|" .. jumlah)
+            Sleep(1000)
+        end
+    end
+end
+
+function jn_w(world)
+    if GetLocal() then
+        while GetLocal() do
+            SendPacket(3, "action|quit_to_exit")
+            Sleep(3000)
+        end
+    end
+
+    while not GetLocal() do
+        SendPacket(3, "action|join_request\nname|" .. world:upper() .. "\ninvitedWorld|0")
+        Sleep(4000)
+        local localPlayer = GetLocal()
+        if localPlayer then
+            local tile = GetTile(math.floor(localPlayer.posX / 32), math.floor(localPlayer.posY / 32))
+            if tile.fg == 6 then
+                while tile.fg == 6 do
+                    SendPacket(3, "action|join_request\nname|" .. world:upper() .. "\ninvitedWorld|0")
+                    Sleep(4000)
+                    localPlayer = GetLocal()
+                    tile = GetTile(math.floor(localPlayer.posX / 32), math.floor(localPlayer.posY / 32))
+                end
+            end
+        end
+    end
+end
+
+function smpng_12()
+    local function clearColumn(column)
+        for tiley = 24, 53 do
+            if GetTile(column, tiley).bg == 14 or GetTile(column + 1, tiley).bg == 14 then
+                FindPath(column, tiley - 1)
+                Sleep(1000)
+                while GetTile(column, tiley).bg == 14 do
+                    tnjk1_3(column, tiley)
+                    Sleep(200)
+                end
+                while GetTile(column + 1, tiley).bg == 14 do
+                    tnjk1_3(column + 1, tiley)
+                    Sleep(200)
+                end
+                sdt_11(3)
+            end
+            cekSeed()
+            Trash()
+        end
+    end
+    clearColumn(0)
+    clearColumn(98)
+end
+
+function plfS_15(world)
+    if inv(102) < 52 then
+        LogToConsole("`0[`9Ibay`0]`4 Mengambil Platform...")
+        Sleep(2000)
+        jn_w(StoragePlat)
+        Sleep(1000)
+        while inv(102) < 52 do
+            for _, object in pairs(GetObjectList()) do
+                if object.itemid == 102 then
+                    FindPath(math.floor((object.posX + 8) / 32) - 1, math.floor(object.posY / 32))
+                    Sleep(1000)
+                    sdtr_11(object)
+                    Sleep(500)
+                    if inv(102) >= 52 then
+                        break
+                    end
+                end
+            end
+        end
+        jn_w(nameworld)
+        Sleep(1000)
+    end
+    for tiley = 2, 52, 2 do
+        if GetTile(1, tiley).fg == 0 then
+            FindPath(0, tiley)
+            Sleep(200)
+            while GetTile(1, tiley).fg == 0 do
+                trh1_3(1, tiley, 102)
+                Sleep(200)
+            end
+        end
+    end
+    for tiley = 2, 52, 2 do
+        if GetTile(98, tiley).fg == 0 then
+            FindPath(99, tiley)
+            Sleep(200)
+            while GetTile(98, tiley).fg == 0 do
+                trh1_3(98, tiley, 102)
+                Sleep(200)
+            end
+        end
+    end
+    Sleep(1000)
+    KeepAlive("plfS_15")
+    SendPacket(2, "action|respawn")
+    Sleep(4000)
+end
+
+function clrd_down_15()
+    for tiley = 27, 51, 12 do
+        for tilex = 2, 97, 1 do
+            if GetTile(tilex, tiley - 2).bg ~= 0 or GetTile(tilex, tiley).bg ~= 0 or GetTile(tilex, tiley + 2).bg ~= 0 then
+                FindPath(tilex - 1, tiley)
+                Sleep(200)
+                for i = -2, 2, 2 do
+                    while GetTile(tilex, tiley + i).bg ~= 0 do
+                        tnjk1_3(tilex, tiley + i)
+                        sleep(200)
+                    end
+                    sdt_11(3)
+                end
+                cekSeed()
+                Trash()
+            end
+        end
+        if (tiley + 6) ~= 57 then
+            for tilex = 97, 2, -1 do
+                if GetTile(tilex, tiley + 4).bg ~= 0 or GetTile(tilex, tiley + 6).bg ~= 0 or
+                    GetTile(tilex, tiley + 8).bg ~= 0 then
+                    FindPath(tilex + 1, tiley + 6)
+                    sleep(200)
+                    for i = 4, 8, 2 do
+                        while GetTile(tilex, tiley + i).bg ~= 0 do
+                            tnjk1_3(tilex, tiley + i)
+                            sleep(200)
+                        end
+                        sdt_11(3)
+                    end
+                    cekSeed()
+                    Trash()
+                end
+            end
+        end
+        KeepAlive("clrd_down_15")
+    end
+end
+
+function brkLv_12()
+    for _, tile in pairs(GetTiles()) do
+        if tile.fg == 4 then
+            FindPath(tile.x, tile.y - 1)
+            Sleep(200)
+            local currentTile = GetTile(tile.x, tile.y)
+
+            while currentTile.fg == 4 do
+                tnjk1_3(tile.x, tile.y)
+                Sleep(200)
+                currentTile = GetTile(tile.x, tile.y)
+            end
+
+            sdt_11(3)
+
+            currentTile = GetTile(tile.x, tile.y)
+            if currentTile.fg == 0 then
+                while inv(2) == 0 do
+                    ambilSeed(3, 50) -- ambil seed kalau block habis
+                    plntDf_122() -- tanam dirt biar jadi block
+                    Sleep(500)
+                end
+
+                -- setelah dipastikan ada block di inventory
+                trh1_3(tile.x, tile.y, 2)
+                Sleep(500)
+            end
+            KeepAlive("brkLv_12")
+        end
+    end
+end
+
+function plntDf_122()
+    LogToConsole("`0[`9Ibay`0]`4Plant Seed")
+    Sleep(2000)
+    FindPath(2, 23)
+    Sleep(500)
+
+    while true do
+        -- Ambil seed jika habis
+        for tilex = 2, 25 do
+            if inv(3) == 0 then
+                ambilSeed(3, 50)
+                Sleep(200)
+            end
+
+            local tile = GetTile(tilex, 23)
+
+            -- Harvest dirt ready
+            if tile.fg == 3 and tile.readyharvest then
+                FindPath(tilex, 23)
+                Sleep(200)
+                while GetTile(tilex, 23).fg == 3 and GetTile(tilex, 23).readyharvest do
+                    tnjk1_3(tilex, 23)
+                    Sleep(200)
+                end
+                sdt_11(3)
+            end
+
+            -- Plant seed jika dirt kosong dan ada seed
+            if tile.fg == 0 and inv(3) > 0 then
+                FindPath(tilex, 23)
+                Sleep(200)
+                while GetTile(tilex, 23).fg == 0 and inv(3) > 0 do
+                    trh1_3(tilex, 23, 3)
+                    Sleep(200)
+                end
+            end
+        end
+
+        -- Jika dirt penuh, hentikan loop
+        if inv(2) > 100 then
+            break
+        end
+
+        LogToConsole("`0[`9Ibay`0]`4Wait..")
+        Sleep(25000)
+        KeepAlive("plntDf_122")
+    end
+end
+
+function cE_15(x, y)
+    for i = 1, 5 do
+        if GetTile((x - 3) + i, y).fg == 0 then
+            return true
+        end
+    end
+    return false
+end
+
+function plnthrvst_2(x, y)
+    while inv(2) < 100 do
+        local hasHarvest = false
+        for tilex = 2, 25 do
+            local tile = GetTile(tilex, 23)
+            if tile.readyharvest then
+                hasHarvest = true
+                FindPath(tilex, 23)
+                Sleep(200)
+                while tile.fg == 3 and tile.readyharvest do
+                    tnjk1_3(tilex, 23)
+                    Sleep(200)
+                    tile = GetTile(tilex, 23)
+                end
+                sdt_11(3)
+                while tile.fg == 0 do
+                    if inv(3) == 0 then
+                        break
+                    end
+                    trh1_3(tilex, 23, 3)
+                    Sleep(200)
+                    tile = GetTile(tilex, 23)
+                end
+                if inv(2) > 100 then
+                    break
+                end
+            end
+        end
+        if not hasHarvest then
+            break
+        end
+    end
+
+    Sleep(600)
+end
+
+function plcDrt_2()
+    for tiley = 24, 2, -2 do
+        for tilex = 4, 98, 5 do
+            if cE_15(tilex, tiley) then
+                FindPath(tilex, tiley + 1)
+                Sleep(300)
+                for i = 1, 5 do
+                    local tx = (tilex - 3) + i
+                    if tx <= 98 then
+                        while inv(3) < 24 do
+                            ambilSeed(3, 50)
+                            Sleep(200)
+                        end
+                        if inv(2) == 0 then
+                            plntDf_122()
+                            Sleep(200)
+                        end
+                        if GetTile(tx, tiley).fg == 0 then
+                            FindPath(tx, tiley + 1)
+                            Sleep(1000)
+                            while GetTile(tx, tiley).fg == 0 do
+                                trh1_3(tx, tiley, 2)
+                                Sleep(200)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        for tilex = 98, 4, -5 do
+            if cE_15(tilex, tiley) then
+                FindPath(tilex, tiley + 1)
+                Sleep(100)
+                for i = 1, 5 do
+                    local tx = (tilex - 3) + i
+                    if tx ~= 99 and tx ~= 100 then
+                        while inv(3) < 24 do
+                            ambilSeed(3, 50)
+                            Sleep(200)
+                        end
+                        if inv(2) == 0 then
+                            plntDf_122()
+                            Sleep(200)
+                        end
+                        if GetTile(tx, tiley).fg == 0 then
+                            FindPath(tx, tiley + 1)
+                            Sleep(1000)
+                            while GetTile(tx, tiley).fg == 0 do
+                                trh1_3(tx, tiley, 2)
+                                Sleep(190)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        KeepAlive("plcDrt_2")
+    end
+end
+
+function ambilSeed(id, jumlah)
+    if inv(id) < jumlah then
+        LogToConsole("`0[`9Ibay`0]`4 Mengambil Seed...")
+
+        SendPacket(3, "action|join_request\nname|" .. worldsaveseed)
+        Sleep(4000)
+
+        for _, object in pairs(GetObjectList()) do
+            if object.itemid == id then
+                FindPath(math.floor((object.posX + 8) / 32) - 1, math.floor(object.posY / 32))
+                Sleep(500)
+                sdtr_11(object)
+                Sleep(500)
+                if inv(id) >= jumlah then
+                    break
+                end
+            end
+        end
+
+        SendPacket(3, "action|join_request\nname|" .. nameworld)
+        Sleep(4000)
+
+    end
+end
+
+function clearLeftoverSafe()
+    LogToConsole("`0[`9Ibay`0]`4Cek sisa dirt & seed dengan cepat...")
+
+    local localX = GetLocal().posX // 32
+    local localY = GetLocal().posY // 32
+
+    for tiley = 2, 24 do
+        for tilex = 1, 98 do
+            local tile = GetTile(tilex, tiley)
+
+            -- Harvest dirt ready
+            if tile.fg == 3 and tile.readyharvest then
+                if math.abs(localX - tilex) > 5 or math.abs(localY - tiley) > 5 then
+                    FindPath(tilex, tiley + 1)
+                    Sleep(150)
+                    localX, localY = tilex, tiley
+                end
+                while tile.fg == 3 and tile.readyharvest do
+                    tnjk1_3(tilex, tiley)
+                    Sleep(150)
+                    tile = GetTile(tilex, tiley)
+                end
+                sdt_11(3) -- ambil hasil harvest
+            end
+
+            -- Ambil semua floating item
+            if tile.drop ~= nil then
+                for _, obj in pairs(tile.drop) do
+                    sdtr_11(obj)
+                    Sleep(150)
+                end
+            end
+
+            -- Trash item sesuai TrashID
+            Trash()
+        end
+        KeepAlive("clearLeftoverSafe")
+    end
+
+    LogToConsole("`0[`9Ibay`0]`4Sisa dirt & seed sudah dibersihkan dengan cepat!")
+end
+
+function respawnAndExit()
+    AUTO_RECONNECT = false          -- <-- matikan autoreconnect saat keluar sengaja
+    INTENTIONAL_DISCONNECT = true
+    SendPacket(2, "action|respawn")
+    Sleep(3000)
+    Disconnect()
+end
+
+
+-- ======== [ MODULE: AUTOSAVE + AUTORECONNECT ] ========
+local STATE_FILE = "last_state_ibay.txt"
+local AUTO_RECONNECT = true
+local INTENTIONAL_DISCONNECT = false
+local SAVE_INTERVAL_MS = 1500
+local REJOIN_COOLDOWN_MS = 4000
+
+local lastSaveTime = 0
+
+local function nowMs()
+    return os.clock() * 1000  -- estimasi ms
+end
+
+local function safeWrite(path, text)
+    local f = io.open(path, "w")
+    if f then f:write(text or ""); f:close(); return true end
+    return false
+end
+
+local function safeRead(path)
+    local f = io.open(path, "r")
+    if not f then return nil end
+    local all = f:read("*a"); f:close()
+    return all
+end
+
+function SaveState(tag)
+    local w = "?"
+    local lx, ly = 0, 0
+    local me = GetLocal()
+    if me then
+        lx = math.floor(me.posX / 32)
+        ly = math.floor(me.posY / 32)
+        -- coba tebak world dari minimap; kalau tidak, pakai nameworld
+        w = (GetCurrentWorld and GetCurrentWorld()) or nameworld or "?"
+    else
+        w = nameworld or "?"
+    end
+    local line = table.concat({w, tostring(lx), tostring(ly), tostring(tag or "-")}, "|")
+    safeWrite(STATE_FILE, line)
+end
+
+function LoadState()
+    local raw = safeRead(STATE_FILE)
+    if not raw or raw == "" then return nil end
+    local w, sx, sy, stag = raw:match("([^|]+)|([^|]+)|([^|]+)|([^|]*)")
+    if not w then return nil end
+    return { world = w, x = tonumber(sx) or 10, y = tonumber(sy) or 10, tag = stag or "-" }
+end
+
+-- panggil ini sering-sering di loop untuk autosave & watchdog
+function KeepAlive(tag)
+    -- AUTOSAVE
+    if nowMs() - lastSaveTime >= SAVE_INTERVAL_MS then
+        SaveState(tag)
+        lastSaveTime = nowMs()
+    end
+
+    -- AUTORECONNECT (jika putus tak sengaja)
+    if AUTO_RECONNECT and not INTENTIONAL_DISCONNECT and not GetLocal() then
+        LogToConsole("`0[`9Ibay`0]`4 Koneksi terputus. Mencoba sambung kembali...")
+        local st = LoadState() or { world = nameworld, x = 10, y = 10 }
+        -- coba join world terakhir berkali-kali sampai berhasil detect GetLocal()
+        for i = 1, 6 do
+            SendPacket(3, "action|join_request\nname|" .. string.upper(st.world) .. "\ninvitedWorld|0")
+            Sleep(REJOIN_COOLDOWN_MS)
+            if GetLocal() then break end
+        end
+        if GetLocal() then
+            -- jalan ke posisi terakhir
+            FindPath(st.x, st.y)
+            Sleep(800)
+            LogToConsole("`0[`9Ibay`0]`a Reconnected ke " .. st.world .. " @(" .. st.x .. "," .. st.y .. ")")
+            -- lanjutkan pekerjaan utama
+            AvoidError(mainDF)
+        else
+            LogToConsole("`0[`9Ibay`0]`c Gagal reconnect sementara. Akan dicoba ulang otomatis...")
+        end
+    end
+end
+-- ======== [ END MODULE ] ========
+
+-- ======== [ EVENT AUTORECONNECT SESUAI API DOCS ] ========
+
+function OnDisconnected()
+    if AUTO_RECONNECT and not INTENTIONAL_DISCONNECT then
+        LogToConsole("⚠️ Koneksi terputus. Mencoba reconnect...")
+        Sleep(5000)
+        local st = LoadState() or { world = nameworld, x = 10, y = 10 }
+        SendPacket(3, "action|join_request\nname|" .. string.upper(st.world) .. "\ninvitedWorld|0")
+    end
+end
+
+function OnConnected()
+    if AUTO_RECONNECT and not INTENTIONAL_DISCONNECT then
+        local st = LoadState()
+        if st then
+            LogToConsole("✅ Reconnect sukses. Balik ke world " .. st.world)
+            FindPath(st.x, st.y)
+            Sleep(800)
+            AvoidError(mainDF)
+        end
+    end
+end
+
+-- ======== [ END EVENT AUTORECONNECT ] ========
+
+
+
+function AvoidError(func, ...)
+    local status, err = pcall(func, ...)
+    if not status then
+        LogToConsole("`0[`9Ibay`0]`4Error: " .. tostring(err) .. " , Restarting Script...")
+        Sleep(2000)
+        AvoidError(func, ...)
+    end
+end
+
+function mainDF()
+    SendPacket(3, "action|join_request\nname|" .. nameworld)
+    Sleep(4000)
+    LogToConsole("`0[`9Ibay`0]`4Mulai Kerja Rodi")
+    Sleep(2000)
+    LogToConsole("`0[`9Ibay`0]`4Clear Side DIRT")
+    smpng_12()
+    Sleep(2000)
+    LogToConsole("`0[`9Ibay`0]`4Place Plat")
+    plfS_15()
+    Sleep(2000)
+    LogToConsole("`0[`9Ibay`0]`4Clear Dirt")
+    clrd_down_15()
+    Sleep(2000)
+    LogToConsole("`0[`9Ibay`0]`4Clear Lava")
+    brkLv_12()
+    Sleep(2000)
+    if inv(3) < 25 then
+        ambilSeed(3, 50) -- fungsi ambil seed
+        Sleep(2000)
+        plntDf_122() -- tanam dulu biar ada dirt lagi
+        Sleep(2000)
+    end
+    LogToConsole("`0[`9Ibay`0]`4Place Dirt")
+    plcDrt_2()
+    Sleep(2000)
+    clearLeftoverSafe()
+    Sleep(2000)
+    SendPacket(2, "action|input\n|text|`0[`9Ibay`0]`4UDAH SELESAI BOSQUEE, CAPE KERJA RODI")
+    Sleep(1000)
+end
+
+-- Jalankan Main
+AvoidError(mainDF)
+respawnAndExit()
+-- ============== [[ END OF SCRIPT BY IBAY ]] ============== --
