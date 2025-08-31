@@ -740,7 +740,7 @@ function OnConnected()
     if AUTO_RECONNECT and not INTENTIONAL_DISCONNECT then
         local st = LoadState()
         if st then
-            LogToConsole("✅ Reconnect sukses. Balik ke world " .. st.world)
+            LogToConsole("Reconnect sukses. Balik ke world " .. st.world)
 
             -- respawn dulu biar aman
             SendPacket(2, "action|respawn")
@@ -822,3 +822,4 @@ AvoidError(mainDF)
 -- ============== [[ END OF SCRIPT BY IBAY ]] ============== --
 -- Script ini dibuat oleh IBAY, Dilarang menjual ulang script ini tanpa izin pembuat.
 -- Terimakasih sudah menggunakan script ini, semoga bermanfaat.
+
