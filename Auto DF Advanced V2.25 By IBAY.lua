@@ -140,7 +140,7 @@ function cekSeed()
 
         -- masuk world save seed
         SendPacket(3, "action|join_request\nname|" .. worldsaveseed)
-        Sleep(4000)
+        Sleep(6000)
 
         for _, id in pairs(SeedID) do
             local jumlah = inv(id)
@@ -166,7 +166,7 @@ function cekSeed()
 
         -- balik lagi ke world farming
         SendPacket(3, "action|join_request\nname|" .. nameworld)
-        Sleep(4000)
+        Sleep(6000)
     end
 end
 
@@ -530,7 +530,7 @@ function ambilSeed(id, jumlah)
         LogToConsole("`0[`9Ibay`0]`4 Mengambil Seed...")
 
         SendPacket(3, "action|join_request\nname|" .. worldsaveseed)
-        Sleep(4000)
+        Sleep(6000)
 
         for _, object in pairs(GetObjectList()) do
             if object.itemid == id then
@@ -545,58 +545,61 @@ function ambilSeed(id, jumlah)
         end
 
         SendPacket(3, "action|join_request\nname|" .. nameworld)
-        Sleep(4000)
+        Sleep(6000)
 
     end
 end
 
-function fillSkippedTiles()
-    LogToConsole("`0[`9Ibay`0]`4Cek & pasang block kosong dengan cepat...")
+function fillSkippedTilesRows(startRow, endRow)
+    LogToConsole("`0[`9Ibay`0]`4Cek & pasang block kosong di baris Dirt Farm...")
 
     local localPlayer = GetLocal()
     if not localPlayer then return end
-    local startX = math.floor(localPlayer.posX / 32)
-    local startY = math.floor(localPlayer.posY / 32)
 
-    -- Cari semua tile kosong
-    local emptyTiles = {}
-    for _, tile in pairs(GetTiles()) do
-        if tile.fg == 0 then
-            table.insert(emptyTiles, tile)
+    -- Loop tiap baris Dirt Farm
+    for tiley = startRow, endRow do
+        for tilex = 2, 98 do -- hanya di area dirt farm
+            local tile = GetTile(tilex, tiley)
+
+            -- Pasang block jika fg = 0 dan bukan lava (fg != 4)
+            if tile.fg == 0 then
+                local currentTile = tile
+
+                -- Skip kalau lava
+                if currentTile.fg == 4 then
+                    goto continue
+                end
+
+                -- Pastikan ada block di inventory
+                while inv(2) == 0 do
+                    ambilSeed(3, 50)
+                    plntDf_122()
+                    Sleep(200)
+                end
+
+                -- Pergi ke tile
+                FindPath(tilex, tiley + 1)
+                Sleep(100)
+
+                -- Pasang block sampai fg bukan 0 lagi
+                while GetTile(tilex, tiley).fg == 0 do
+                    trh1_3(tilex, tiley, 2)
+                    Sleep(200)
+                end
+            end
+
+            ::continue::
         end
     end
 
-    -- Urutkan tile berdasarkan jarak ke player (dekat dulu)
-    table.sort(emptyTiles, function(a, b)
-        local da = math.abs(a.x - startX) + math.abs(a.y - startY)
-        local db = math.abs(b.x - startX) + math.abs(b.y - startY)
-        return da < db
-    end)
-
-    -- Loop tiap tile kosong
-    for _, tile in ipairs(emptyTiles) do
-        -- Pastikan ada block
-        while inv(2) == 0 do
-            ambilSeed(3, 50)
-            plntDf_122()
-            Sleep(200)
-        end
-
-        -- Pergi ke tile
-        FindPath(tile.x, tile.y + 1)
-        Sleep(100)
-
-        -- Pasang block
-        while GetTile(tile.x, tile.y).fg == 0 do
-            trh1_3(tile.x, tile.y, 2)
-            Sleep(200)
-        end
-    end
-
-    LogToConsole("`0[`9Ibay`0]`4Semua block kosong sudah dipasang.")
+    LogToConsole("`0[`9Ibay`0]`4Semua block kosong di baris Dirt Farm sudah dipasang.")
 end
 
 
+function fillSkippedTiles()
+    fillSkippedTilesRows(2, 23)  -- baris bawah sampai tengah
+    fillSkippedTilesRows(24, 52) -- baris tengah sampai atas
+end
 
 function clearLeftoverSafe()
     LogToConsole("`0[`9Ibay`0]`4Cek sisa dirt & seed dengan cepat...")
@@ -752,7 +755,7 @@ function OnConnected()
         else
             -- kalau state kosong, fallback join ke world default
             SendPacket(3, "action|join_request\nname|" .. nameworld)
-            Sleep(2000)
+            Sleep(4000)
             AvoidError(mainDF)
         end
     end
@@ -794,7 +797,9 @@ function mainDF()
     end
     LogToConsole("`0[`9Ibay`0]`4Place Dirt")
     plcDrt_2()
-    Sleep(2000)
+    Sleep(1000)
+    SendPacket(2, "action|respawn")
+    Sleep(3000)
     fillSkippedTiles()
     Sleep(2000)
     clearLeftoverSafe()
