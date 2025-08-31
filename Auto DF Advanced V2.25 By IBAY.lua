@@ -68,25 +68,59 @@ end
 function findEmptyTile(radius)
     local px = GetLocal().posX // 32
     local py = GetLocal().posY // 32
+
+    -- Cek area sekitar sesuai radius
     for x = -radius, radius do
         for y = -radius, radius do
             local tx = px + x
             local ty = py + y
             local tile = GetTile(tx, ty)
 
+            if tile ~= nil then
+                local dropCount = 0
+                -- cek drop pakai GetObjectList()
+                for _, obj in pairs(GetObjectList()) do
+                    local ox = math.floor((obj.posX + 8) / 32)
+                    local oy = math.floor(obj.posY / 32)
+                    if ox == tx and oy == ty then
+                        dropCount = dropCount + 1
+                    end
+                end
+
+                -- Kalau tile kosong & belum ada drop
+                if tile.fg == 0 and tile.bg == 0 and dropCount == 0 then
+                    return {
+                        x = tx,
+                        y = ty
+                    }
+                end
+            end
+        end
+    end
+
+    -- Kalau semua penuh, cari ke samping lebih jauh
+    for offset = 1, radius * 2 do
+        local tx = px + offset
+        local tile = GetTile(tx, py)
+        if tile ~= nil then
             local dropCount = 0
-            if tile.drop ~= nil then
-                dropCount = #tile.drop
+            for _, obj in pairs(GetObjectList()) do
+                local ox = math.floor((obj.posX + 8) / 32)
+                local oy = math.floor(obj.posY / 32)
+                if ox == tx and oy == py then
+                    dropCount = dropCount + 1
+                end
             end
 
             if tile.fg == 0 and tile.bg == 0 and dropCount == 0 then
                 return {
                     x = tx,
-                    y = ty
+                    y = py
                 }
             end
         end
     end
+
     return nil
 end
 
@@ -103,26 +137,34 @@ function cekSeed()
         Sleep(200)
         LogToConsole("`0[`9Ibay`0]`4 Drop Seed...")
         Sleep(500)
+
+        -- masuk world save seed
         SendPacket(3, "action|join_request\nname|" .. worldsaveseed)
         Sleep(4000)
 
         for _, id in pairs(SeedID) do
             local jumlah = inv(id)
             if jumlah >= 100 then
-
+                -- cari tile kosong dengan radius 5
                 local emptyTile = findEmptyTile(5)
-                if emptyTile then
+
+                if emptyTile ~= nil then
+                    -- pindah ke tile kosong
                     FindPath(emptyTile.x, emptyTile.y)
                     Sleep(1000)
 
+                    -- drop seed
                     SendPacket(2, "action|drop\n|itemID|" .. id)
+                    Sleep(100)
                     SendPacket(2, "action|dialog_return\ndialog_name|drop_item\nitemID|" .. id .. "|\ncount|" .. jumlah)
-                    Sleep(4000)
+                    Sleep(2000)
                 else
-                    LogToConsole("`0[`9Ibay`0]`c Tidak ada posisi kosong ditemukan!")
+                    LogToConsole("`0[`9Ibay`0]`c Tidak ada tile kosong ditemukan untuk drop!")
                 end
             end
         end
+
+        -- balik lagi ke world farming
         SendPacket(3, "action|join_request\nname|" .. nameworld)
         Sleep(4000)
     end
@@ -248,7 +290,7 @@ function clrd_down_15()
                 for i = -2, 2, 2 do
                     while GetTile(tilex, tiley + i).bg ~= 0 do
                         tnjk1_3(tilex, tiley + i)
-                        sleep(200)
+                        Sleep(200)
                     end
                     sdt_11(3)
                 end
@@ -261,11 +303,11 @@ function clrd_down_15()
                 if GetTile(tilex, tiley + 4).bg ~= 0 or GetTile(tilex, tiley + 6).bg ~= 0 or
                     GetTile(tilex, tiley + 8).bg ~= 0 then
                     FindPath(tilex + 1, tiley + 6)
-                    sleep(200)
+                    Sleep(200)
                     for i = 4, 8, 2 do
                         while GetTile(tilex, tiley + i).bg ~= 0 do
                             tnjk1_3(tilex, tiley + i)
-                            sleep(200)
+                            Sleep(200)
                         end
                         sdt_11(3)
                     end
@@ -515,9 +557,11 @@ function clearLeftoverSafe()
                 sdt_11(3) -- ambil hasil harvest
             end
 
-            -- Ambil semua floating item
-            if tile.drop ~= nil then
-                for _, obj in pairs(tile.drop) do
+            -- Ambil semua floating item di tile
+            for _, obj in pairs(GetObjectList()) do
+                local ox = math.floor((obj.posX + 8) / 32)
+                local oy = math.floor(obj.posY / 32)
+                if ox == tilex and oy == tiley then
                     sdtr_11(obj)
                     Sleep(150)
                 end
@@ -533,10 +577,11 @@ function clearLeftoverSafe()
 end
 
 function respawnAndExit()
-    AUTO_RECONNECT = false          -- <-- matikan autoreconnect saat keluar sengaja
+    AUTO_RECONNECT = false
     INTENTIONAL_DISCONNECT = true
     SendPacket(2, "action|respawn")
-    Sleep(3000)
+    Sleep(2000)
+    SaveState("exit")
     Disconnect()
 end
 
@@ -551,19 +596,26 @@ local REJOIN_COOLDOWN_MS = 4000
 local lastSaveTime = 0
 
 local function nowMs()
-    return os.clock() * 1000  -- estimasi ms
+    return os.clock() * 1000 -- estimasi ms
 end
 
 local function safeWrite(path, text)
     local f = io.open(path, "w")
-    if f then f:write(text or ""); f:close(); return true end
+    if f then
+        f:write(text or "");
+        f:close();
+        return true
+    end
     return false
 end
 
 local function safeRead(path)
     local f = io.open(path, "r")
-    if not f then return nil end
-    local all = f:read("*a"); f:close()
+    if not f then
+        return nil
+    end
+    local all = f:read("*a");
+    f:close()
     return all
 end
 
@@ -585,51 +637,42 @@ end
 
 function LoadState()
     local raw = safeRead(STATE_FILE)
-    if not raw or raw == "" then return nil end
+    if not raw or raw == "" then
+        return nil
+    end
     local w, sx, sy, stag = raw:match("([^|]+)|([^|]+)|([^|]+)|([^|]*)")
-    if not w then return nil end
-    return { world = w, x = tonumber(sx) or 10, y = tonumber(sy) or 10, tag = stag or "-" }
+    if not w then
+        return nil
+    end
+    return {
+        world = w,
+        x = tonumber(sx) or 10,
+        y = tonumber(sy) or 10,
+        tag = stag or "-"
+    }
 end
 
--- panggil ini sering-sering di loop untuk autosave & watchdog
+-- panggil ini sering-sering di loop untuk autosave
 function KeepAlive(tag)
-    -- AUTOSAVE
-    if nowMs() - lastSaveTime >= SAVE_INTERVAL_MS then
-        SaveState(tag)
-        lastSaveTime = nowMs()
-    end
-
-    -- AUTORECONNECT (jika putus tak sengaja)
-    if AUTO_RECONNECT and not INTENTIONAL_DISCONNECT and not GetLocal() then
-        LogToConsole("`0[`9Ibay`0]`4 Koneksi terputus. Mencoba sambung kembali...")
-        local st = LoadState() or { world = nameworld, x = 10, y = 10 }
-        -- coba join world terakhir berkali-kali sampai berhasil detect GetLocal()
-        for i = 1, 6 do
-            SendPacket(3, "action|join_request\nname|" .. string.upper(st.world) .. "\ninvitedWorld|0")
-            Sleep(REJOIN_COOLDOWN_MS)
-            if GetLocal() then break end
-        end
-        if GetLocal() then
-            -- jalan ke posisi terakhir
-            FindPath(st.x, st.y)
-            Sleep(800)
-            LogToConsole("`0[`9Ibay`0]`a Reconnected ke " .. st.world .. " @(" .. st.x .. "," .. st.y .. ")")
-            -- lanjutkan pekerjaan utama
-            AvoidError(mainDF)
-        else
-            LogToConsole("`0[`9Ibay`0]`c Gagal reconnect sementara. Akan dicoba ulang otomatis...")
-        end
+    local now = nowMs()
+    if now - lastSaveTime > SAVE_INTERVAL_MS then
+        SaveState(tag or "autosave")
+        lastSaveTime = now
     end
 end
--- ======== [ END MODULE ] ========
+
 
 -- ======== [ EVENT AUTORECONNECT SESUAI API DOCS ] ========
 
 function OnDisconnected()
     if AUTO_RECONNECT and not INTENTIONAL_DISCONNECT then
-        LogToConsole("⚠️ Koneksi terputus. Mencoba reconnect...")
+        LogToConsole("Koneksi terputus. Mencoba reconnect...")
         Sleep(5000)
-        local st = LoadState() or { world = nameworld, x = 10, y = 10 }
+        local st = LoadState() or {
+            world = nameworld,
+            x = 10,
+            y = 10
+        }
         SendPacket(3, "action|join_request\nname|" .. string.upper(st.world) .. "\ninvitedWorld|0")
     end
 end
@@ -639,16 +682,27 @@ function OnConnected()
         local st = LoadState()
         if st then
             LogToConsole("✅ Reconnect sukses. Balik ke world " .. st.world)
+
+            -- respawn dulu biar aman
+            SendPacket(2, "action|respawn")
+            Sleep(1000)
+
+            -- pindah ke posisi terakhir
             FindPath(st.x, st.y)
             Sleep(800)
+
+            -- lanjutkan aksi terakhir
+            AvoidError(mainDF)
+        else
+            -- kalau state kosong, fallback join ke world default
+            SendPacket(3, "action|join_request\nname|" .. nameworld)
+            Sleep(2000)
             AvoidError(mainDF)
         end
     end
 end
 
 -- ======== [ END EVENT AUTORECONNECT ] ========
-
-
 
 function AvoidError(func, ...)
     local status, err = pcall(func, ...)
