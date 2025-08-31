@@ -1,9 +1,39 @@
 -- ============== [[ AUTO DF SCRIPT BY IBAY ]] ============== --
-nameworld = "WORLDDF" -- World tempat bot membuat Dirt Farm
-StoragePlat = "NAMEWORLD|DOORID" -- World penyimpanan platform
-worldsaveseed = "NAMEWORLD|DOORID" -- World penyimpanan seed
+-- Version: V1.25
+-- Update: 01 September 2025
+-- Author: IBAY
+-- Discord: https://discord.gg/ibaysptr
+-- Script ini dibuat oleh IBAY, Dilarang menjual ulang script ini tanpa izin pembuat.
+-- Terimakasih sudah menggunakan script ini, semoga bermanfaat.
+-- Jangan ubah apapun kecuali kamu tau apa yang kamu lakukan
+-- Kalau ada error, silahkan lapor ke discord saya
+-- Gunakan script ini dengan bijak, saya tidak bertanggung jawab jika akun terkena banned
+
+-- ============== [[ PENGATURAN ]] ============== --
+-- Ganti sesuai kebutuhan, pastikan world sudah ada & benar
+
+nameworld = "uiszw" -- World tempat bot membuat Dirt Farm
+StoragePlat = "ibaymart|persija28" -- World penyimpanan platform
+worldsaveseed = "hallustrg|persija28" -- World penyimpanan seed
 
 -- ============= Jangan Diubah ============== --
+sendDialog({
+    title = "🚀 Script Pabrik By IBAY 🚀",
+    message = "Fitur Lengkap Script:\n\n" ..
+              "🌱 Auto Plant Seed (tanam seed otomatis)\n" ..
+              "🪓 Auto Break Dirt & Lava (rusak block otomatis)\n" ..
+              "🧹 Auto Clear Dirt (bersihkan dirt di area farming)\n" ..
+              "🪴 Fill Empty Cave Tiles (isi tile kosong dengan dirt)\n" ..
+              "🟫 Auto Collect Seed & Dirt (ambil seed & hasil harvest otomatis)\n" ..
+              "🟦 Auto Place Platform (letakkan platform secara otomatis)\n" ..
+              "🗑️ Trash Item Otomatis (buang item sesuai TrashID)\n" ..
+              "💾 Auto Save State (menyimpan posisi & state script)\n" ..
+              "🔄 Auto Reconnect (jika koneksi putus, balik ke world terakhir)\n" ..
+              "❌ Auto Disconnect (keluar world dengan aman setelah selesai)\n\n" ..
+              "Catatan: Script dibuat karena gabut 😎",
+    confirm = "Oke Gas!",
+    alias = "IBAY"
+})
 
 EditToggle("Antibounce", true)
 EditToggle("ModFly", true)
@@ -792,4 +822,3 @@ AvoidError(mainDF)
 -- ============== [[ END OF SCRIPT BY IBAY ]] ============== --
 -- Script ini dibuat oleh IBAY, Dilarang menjual ulang script ini tanpa izin pembuat.
 -- Terimakasih sudah menggunakan script ini, semoga bermanfaat.
-
