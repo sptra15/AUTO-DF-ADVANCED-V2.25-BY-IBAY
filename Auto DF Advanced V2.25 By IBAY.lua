@@ -369,7 +369,6 @@ function brkLv_12()
     end
 end
 
-
 function plntDf_122()
     LogToConsole("`0[`9Ibay`0]`4Plant Seed")
     Sleep(2000)
@@ -556,7 +555,7 @@ function fillEmptyCaveTiles()
             -- jalan ke atas tile
             FindPath(tile.x, tile.y - 1)
             Sleep(200)
-            
+
             -- pastikan ada dirt
             while inv(2) == 0 do
                 ambilSeed(3, 50)
@@ -572,7 +571,6 @@ function fillEmptyCaveTiles()
         end
     end
 end
-
 
 function clearLeftoverSafe()
     LogToConsole("`0[`9Ibay`0]`4Cek sisa dirt & seed dengan cepat...")
@@ -693,7 +691,6 @@ function KeepAlive(tag)
     end
 end
 
-
 -- ======== [ EVENT AUTORECONNECT SESUAI API DOCS ] ========
 
 function OnDisconnected()
@@ -780,16 +777,18 @@ function mainDF()
     SendPacket(2, "action|input\n|text|`0[`9Ibay`0]`4UDAH SELESAI BOSQUEE, CAPE KERJA RODI")
     Sleep(1000)
     -- Respawn & disconnect aman
-    INTENTIONAL_DISCONNECT = true
     AUTO_RECONNECT = false
-    pcall(function()
-        SendPacket(2, "action|respawn")
-        Sleep(3000)
-        SaveState("exit")
-        Disconnect()
-    end)
+    INTENTIONAL_DISCONNECT = true
+    SendPacket(2, "action|respawn")
+    Sleep(3000)
+    SaveState("exit")
+    Sleep(1000)
+    SendPacket(3, "action|quit")
+
 end
 
 -- Jalankan Main
 AvoidError(mainDF)
 -- ============== [[ END OF SCRIPT BY IBAY ]] ============== --
+-- Script ini dibuat oleh IBAY, Dilarang menjual ulang script ini tanpa izin pembuat.
+-- Terimakasih sudah menggunakan script ini, semoga bermanfaat.
