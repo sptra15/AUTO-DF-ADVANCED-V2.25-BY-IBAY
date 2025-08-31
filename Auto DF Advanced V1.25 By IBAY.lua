@@ -1,7 +1,7 @@
 -- ============== [[ AUTO DF SCRIPT BY IBAY ]] ============== --
-nameworld = "uiszw" -- World tempat bot membuat Dirt Farm
-StoragePlat = "ibaymart|persija28" -- World penyimpanan platform
-worldsaveseed = "hallustrg|persija28" -- World penyimpanan seed
+nameworld = "WORLDDF" -- World tempat bot membuat Dirt Farm
+StoragePlat = "NAMEWORLD|DOORID" -- World penyimpanan platform
+worldsaveseed = "NAMEWORLD|DOORID" -- World penyimpanan seed
 
 -- ============= Jangan Diubah ============== --
 
@@ -792,3 +792,4 @@ AvoidError(mainDF)
 -- ============== [[ END OF SCRIPT BY IBAY ]] ============== --
 -- Script ini dibuat oleh IBAY, Dilarang menjual ulang script ini tanpa izin pembuat.
 -- Terimakasih sudah menggunakan script ini, semoga bermanfaat.
+
