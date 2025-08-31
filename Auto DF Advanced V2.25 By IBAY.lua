@@ -321,6 +321,23 @@ function clrd_down_15()
 end
 
 function brkLv_12()
+    -- cek dulu ada lava atau tidak
+    local lavaExists = false
+    for _, tile in pairs(GetTiles()) do
+        if tile.fg == 4 then
+            lavaExists = true
+            break
+        end
+    end
+
+    -- kalau tidak ada lava, langsung return
+    if not lavaExists then
+        LogToConsole("`0[`9Ibay`0]`4Tidak ada lava")
+        Sleep(200)
+        return
+    end
+
+    -- kalau lava ada, lanjut proses normal
     for _, tile in pairs(GetTiles()) do
         if tile.fg == 4 then
             FindPath(tile.x, tile.y - 1)
@@ -351,6 +368,7 @@ function brkLv_12()
         end
     end
 end
+
 
 function plntDf_122()
     LogToConsole("`0[`9Ibay`0]`4Plant Seed")
@@ -532,9 +550,57 @@ function ambilSeed(id, jumlah)
     end
 end
 
+function fillSkippedTiles()
+    LogToConsole("`0[`9Ibay`0]`4Cek & pasang block kosong dengan cepat...")
+
+    local localPlayer = GetLocal()
+    if not localPlayer then return end
+    local startX = math.floor(localPlayer.posX / 32)
+    local startY = math.floor(localPlayer.posY / 32)
+
+    -- Cari semua tile kosong
+    local emptyTiles = {}
+    for _, tile in pairs(GetTiles()) do
+        if tile.fg == 0 then
+            table.insert(emptyTiles, tile)
+        end
+    end
+
+    -- Urutkan tile berdasarkan jarak ke player (dekat dulu)
+    table.sort(emptyTiles, function(a, b)
+        local da = math.abs(a.x - startX) + math.abs(a.y - startY)
+        local db = math.abs(b.x - startX) + math.abs(b.y - startY)
+        return da < db
+    end)
+
+    -- Loop tiap tile kosong
+    for _, tile in ipairs(emptyTiles) do
+        -- Pastikan ada block
+        while inv(2) == 0 do
+            ambilSeed(3, 50)
+            plntDf_122()
+            Sleep(200)
+        end
+
+        -- Pergi ke tile
+        FindPath(tile.x, tile.y + 1)
+        Sleep(100)
+
+        -- Pasang block
+        while GetTile(tile.x, tile.y).fg == 0 do
+            trh1_3(tile.x, tile.y, 2)
+            Sleep(200)
+        end
+    end
+
+    LogToConsole("`0[`9Ibay`0]`4Semua block kosong sudah dipasang.")
+end
+
+
+
 function clearLeftoverSafe()
     LogToConsole("`0[`9Ibay`0]`4Cek sisa dirt & seed dengan cepat...")
-
+    Sleep(1000)
     local localX = GetLocal().posX // 32
     local localY = GetLocal().posY // 32
 
@@ -575,16 +641,6 @@ function clearLeftoverSafe()
 
     LogToConsole("`0[`9Ibay`0]`4Sisa dirt & seed sudah dibersihkan dengan cepat!")
 end
-
-function respawnAndExit()
-    AUTO_RECONNECT = false
-    INTENTIONAL_DISCONNECT = true
-    SendPacket(2, "action|respawn")
-    Sleep(2000)
-    SaveState("exit")
-    Disconnect()
-end
-
 
 -- ======== [ MODULE: AUTOSAVE + AUTORECONNECT ] ========
 local STATE_FILE = "last_state_ibay.txt"
@@ -739,13 +795,23 @@ function mainDF()
     LogToConsole("`0[`9Ibay`0]`4Place Dirt")
     plcDrt_2()
     Sleep(2000)
+    fillSkippedTiles()
+    Sleep(2000)
     clearLeftoverSafe()
     Sleep(2000)
     SendPacket(2, "action|input\n|text|`0[`9Ibay`0]`4UDAH SELESAI BOSQUEE, CAPE KERJA RODI")
     Sleep(1000)
+    -- Respawn & disconnect aman
+    INTENTIONAL_DISCONNECT = true
+    AUTO_RECONNECT = false
+    pcall(function()
+        SendPacket(2, "action|respawn")
+        Sleep(3000)
+        SaveState("exit")
+        Disconnect()
+    end)
 end
 
 -- Jalankan Main
 AvoidError(mainDF)
-respawnAndExit()
 -- ============== [[ END OF SCRIPT BY IBAY ]] ============== --
