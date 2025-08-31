@@ -550,56 +550,29 @@ function ambilSeed(id, jumlah)
     end
 end
 
-function fillSkippedTilesRows(startRow, endRow)
-    LogToConsole("`0[`9Ibay`0]`4Cek & pasang block kosong di baris Dirt Farm...")
-
-    local localPlayer = GetLocal()
-    if not localPlayer then return end
-
-    -- Loop tiap baris Dirt Farm
-    for tiley = startRow, endRow do
-        for tilex = 2, 98 do -- hanya di area dirt farm
-            local tile = GetTile(tilex, tiley)
-
-            -- Pasang block jika fg = 0 dan bukan lava (fg != 4)
-            if tile.fg == 0 then
-                local currentTile = tile
-
-                -- Skip kalau lava
-                if currentTile.fg == 4 then
-                    goto continue
-                end
-
-                -- Pastikan ada block di inventory
-                while inv(2) == 0 do
-                    ambilSeed(3, 50)
-                    plntDf_122()
-                    Sleep(200)
-                end
-
-                -- Pergi ke tile
-                FindPath(tilex, tiley + 1)
-                Sleep(100)
-
-                -- Pasang block sampai fg bukan 0 lagi
-                while GetTile(tilex, tiley).fg == 0 do
-                    trh1_3(tilex, tiley, 2)
-                    Sleep(200)
-                end
+function fillEmptyCaveTiles()
+    for _, tile in pairs(GetTiles()) do
+        if tile.bg == 14 and tile.fg == 0 then
+            -- jalan ke atas tile
+            FindPath(tile.x, tile.y - 1)
+            Sleep(200)
+            
+            -- pastikan ada dirt
+            while inv(2) == 0 do
+                ambilSeed(3, 50)
+                plntDf_122()
+                Sleep(200)
             end
 
-            ::continue::
+            -- pasang dirt
+            while GetTile(tile.x, tile.y).fg == 0 do
+                trh1_3(tile.x, tile.y, 2)
+                Sleep(200)
+            end
         end
     end
-
-    LogToConsole("`0[`9Ibay`0]`4Semua block kosong di baris Dirt Farm sudah dipasang.")
 end
 
-
-function fillSkippedTiles()
-    fillSkippedTilesRows(2, 23)  -- baris bawah sampai tengah
-    fillSkippedTilesRows(24, 52) -- baris tengah sampai atas
-end
 
 function clearLeftoverSafe()
     LogToConsole("`0[`9Ibay`0]`4Cek sisa dirt & seed dengan cepat...")
@@ -800,7 +773,7 @@ function mainDF()
     Sleep(1000)
     SendPacket(2, "action|respawn")
     Sleep(3000)
-    fillSkippedTiles()
+    fillEmptyCaveTiles()
     Sleep(2000)
     clearLeftoverSafe()
     Sleep(2000)
