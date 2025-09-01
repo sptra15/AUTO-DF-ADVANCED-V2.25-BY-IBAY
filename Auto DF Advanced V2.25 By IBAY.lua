@@ -18,7 +18,7 @@ worldsaveseed = "worldsave|DoorID" -- World penyimpanan seed
 startWorldIndex = 1  -- index world pertama yang mau mulai
 totalWorld = 3       -- total world yang mau dijalankan
 
-
+ 
 -- ============= Jangan Diubah ============== --
 sendDialog({
     title = "🚀 Script Pabrik By IBAY 🚀",
@@ -32,9 +32,11 @@ sendDialog({
               "🗑️ Trash Item Otomatis (buang item sesuai TrashID)\n" ..
               "💾 Auto Save State (menyimpan posisi & state script)\n" ..
               "🔄 Auto Reconnect (jika koneksi putus, balik ke world terakhir)\n" ..
+              "🌍 Multi World Support (jalan otomatis ke world berikutnya & skip world yang sudah selesai)\n" ..
               "❌ Auto Disconnect (keluar world dengan aman setelah selesai)\n\n" ..
               "Catatan: Script dibuat karena gabut 😎",
     confirm = "Oke Gas!",
+    url = "🔧 Dibuat oleh IBAY | Discord: https://discord.gg/ibaysptr",
     alias = "IBAY"
 })
 
@@ -746,65 +748,47 @@ end
 
 -- ======== [ END EVENT AUTORECONNECT ] ========
 
--- ========== MAIN FUNCTION ==========
+-- ======== [ TRACK WORLD YANG SUDAH SELESAI ] ========
+local FINISHED_FILE = "finished_worlds.txt"
+local finishedWorlds = {}
 
-function mainDF()
-    LogToConsole("`0[`9Ibay`0]`4Memulai Script Auto Dirt Farm By IBAY")
-    Sleep(2000)
-    LogToConsole("`0[`9Ibay`0]`4Mulai Kerja Rodi")
-    Sleep(2000)
-    LogToConsole("`0[`9Ibay`0]`4Clear Side DIRT")
-    smpng_12()
-    Sleep(2000)
-    LogToConsole("`0[`9Ibay`0]`4Place Plat")
-    plfS_15()
-    Sleep(2000)
-    LogToConsole("`0[`9Ibay`0]`4Clear Dirt")
-    clrd_down_15()
-    Sleep(2000)
-    LogToConsole("`0[`9Ibay`0]`4Clear Lava")
-    brkLv_12()
-    Sleep(2000)
-    if inv(3) < 25 then
-        ambilSeed(3, 50) -- fungsi ambil seed
-        Sleep(2000)
-        plntDf_122() -- tanam dulu biar ada dirt lagi
-        Sleep(2000)
+-- simpan ke file
+local function saveFinishedWorlds()
+    local f = io.open(FINISHED_FILE, "w")
+    if f then
+        for name, done in pairs(finishedWorlds) do
+            if done then
+                f:write(name .. "\n")
+            end
+        end
+        f:close()
     end
-    LogToConsole("`0[`9Ibay`0]`4Place Dirt")
-    plcDrt_2()
-    Sleep(1000)
-    SendPacket(2, "action|respawn")
-    Sleep(3000)
-    fillEmptyCaveTiles()
-    Sleep(2000)
-    clearLeftoverSafe()
-    Sleep(2000)
-    SendPacket(2, "action|input\n|text|`0[`9Ibay`0]`4UDAH SELESAI BOSQUEE, CAPE KERJA RODI")
-    Sleep(1000)
-    -- Respawn & disconnect aman
-    AUTO_RECONNECT = false
-    INTENTIONAL_DISCONNECT = true
-    SendPacket(2, "action|respawn")
-    Sleep(3000)
-    SaveState("exit")
-    Sleep(1000)
-    SendPacket(3, "action|quit")
-
 end
 
--- ========== LOOP MULTI WORLD ==========
-function StartMultiWorld()
-    local endWorldIndex = math.min(startWorldIndex + totalWorld - 1, #WorldList)
-    for i = startWorldIndex, endWorldIndex do
-        local worldName = WorldList[i]
-        jn_w(worldName)   -- join world tanpa keluar manual
-        AvoidError(mainDF)
-        LogToConsole("`0[`9Ibay`0]`4Selesai farming di world: " .. worldName)
-        Sleep(2000)
+-- load dari file
+local function loadFinishedWorlds()
+    local f = io.open(FINISHED_FILE, "r")
+    if not f then return end
+    for line in f:lines() do
+        finishedWorlds[line] = true
     end
-    LogToConsole("`0[`9Ibay`0]`4Semua world selesai!")
+    f:close()
 end
+
+-- tandai world selesai
+local function markWorldDone(worldName)
+    finishedWorlds[worldName] = true
+    saveFinishedWorlds()
+end
+
+-- cek world sudah selesai atau belum
+local function isWorldDone(worldName)
+    return finishedWorlds[worldName] == true
+end
+
+-- load progress sebelumnya
+loadFinishedWorlds()
+-- ======== [ END TRACK WORLD YANG SUDAH SELESAI ] ========
 
 -- ========== FUNCTION ERROR HANDLING ==========
 function AvoidError(func, ...)
@@ -816,8 +800,89 @@ function AvoidError(func, ...)
     end
 end
 
--- ======== JALANKAN SCRIPT ========
-AvoidError(StartMultiWorld)
+-- ========== MAIN FUNCTION ==========
+
+-- ========== MAIN FUNCTION ==========
+
+function mainDF()
+    LogToConsole("`0[`9Ibay`0]`4Memulai Script Auto Dirt Farm By IBAY")
+    Sleep(2000)
+
+    for i = startWorldIndex, startWorldIndex + totalWorld - 1 do
+        local worldName = WorldList[i]
+        nameworld = worldName
+
+        -- cek apakah world sudah selesai
+        if isWorldDone(worldName) then
+            LogToConsole("`0[`9Ibay`0]`c[SKIP] " .. worldName .. " sudah selesai sebelumnya, lanjut world berikutnya...")
+        else
+            -- join world
+            jn_w(worldName)
+                        Sleep(2000)
+
+            -- proses farming normal
+            AvoidError(function()
+                LogToConsole("`0[`9Ibay`0]`4Clear Side DIRT")
+                smpng_12()
+                Sleep(2000)
+
+                LogToConsole("`0[`9Ibay`0]`4Place Plat")
+                plfS_15(worldName)
+                Sleep(2000)
+
+                LogToConsole("`0[`9Ibay`0]`4Clear Dirt")
+                clrd_down_15()
+                Sleep(2000)
+
+                LogToConsole("`0[`9Ibay`0]`4Break Lava")
+                brkLv_12()
+                Sleep(2000)
+
+                LogToConsole("`0[`9Ibay`0]`4Plant Dirt Farm")
+                plntDf_122()
+                Sleep(2000)
+
+                LogToConsole("`0[`9Ibay`0]`4Place Dirt")
+                plcDrt_2()
+                Sleep(2000)
+
+                LogToConsole("`0[`9Ibay`0]`4Fill Empty Cave")
+                fillEmptyCaveTiles()
+                Sleep(2000)
+
+                LogToConsole("`0[`9Ibay`0]`4Clear Sisa Seed/Dirt")
+                clearLeftoverSafe()
+                Sleep(2000)
+            end)
+
+            -- tandai selesai world ini
+            markWorldDone(worldName)
+            LogToConsole("`0[`9Ibay`0]`2Selesai di " .. worldName)
+        end
+
+        -- cek apakah masih ada world berikutnya
+        if i < (startWorldIndex + totalWorld - 1) then
+            LogToConsole("`0[`9Ibay`0]`2Lanjut world berikutnya...")
+            Sleep(2000)
+        else
+            -- world terakhir → quit
+            SendPacket(2, "action|input\n|text|`0[`9Ibay`0]`4UDAH SELESAI BOSQUEE, CAPE KERJA RODI")
+            Sleep(1000)
+
+            AUTO_RECONNECT = false
+            INTENTIONAL_DISCONNECT = true
+            SendPacket(2, "action|respawn")
+            Sleep(3000)
+            SaveState("exit")
+            Sleep(1000)
+            SendPacket(3, "action|quit")
+
+            LogToConsole("`4[EXIT] Semua world sudah selesai, script berhenti.")
+        end
+    end
+end
+AvoidError(mainDF)
+
 -- ============== [[ END OF SCRIPT BY IBAY ]] ============== --
 -- Script ini dibuat oleh IBAY, Dilarang menjual ulang script ini tanpa izin pembuat.
 -- Terimakasih sudah menggunakan script ini, semoga bermanfaat.
