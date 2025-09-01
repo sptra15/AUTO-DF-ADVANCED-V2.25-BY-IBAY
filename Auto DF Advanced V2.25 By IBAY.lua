@@ -390,9 +390,11 @@ function plntDf_122()
     FindPath(2, 23)
     Sleep(500)
 
+    local firstPlant = true -- cek apakah plant pertama
+
     while true do
-        -- Ambil seed jika habis
         for tilex = 2, 25 do
+            -- Ambil seed kalau habis
             if inv(3) == 0 then
                 ambilSeed(3, 50)
                 Sleep(200)
@@ -407,11 +409,13 @@ function plntDf_122()
                 while GetTile(tilex, 23).fg == 3 and GetTile(tilex, 23).readyharvest do
                     tnjk1_3(tilex, 23)
                     Sleep(200)
+                    trh1_3(tilex, 23, 3) -- langsung tanam lagi setelah tnjk
+                    Sleep(200)
                 end
                 sdt_11(3)
             end
 
-            -- Plant seed jika dirt kosong dan ada seed
+            -- Plant seed jika kosong
             if tile.fg == 0 and inv(3) > 0 then
                 FindPath(tilex, 23)
                 Sleep(200)
@@ -422,16 +426,22 @@ function plntDf_122()
             end
         end
 
-        -- Jika dirt penuh, hentikan loop
+        -- stop kalau dirt sudah penuh
         if inv(2) > 100 then
             break
         end
 
-        LogToConsole("`0[`9Ibay`0]`4Wait..")
-        Sleep(25000)
+        -- kalau baru pertama kali tanam → tunggu 25 detik
+        if firstPlant then
+            LogToConsole("`0[`9Ibay`0]`4Menunggu Harvest")
+            Sleep(25000)
+            firstPlant = false
+        end
+
         KeepAlive("plntDf_122")
     end
 end
+
 
 function cE_15(x, y)
     for i = 1, 5 do
@@ -480,56 +490,26 @@ end
 
 function plcDrt_2()
     for tiley = 24, 2, -2 do
-        for tilex = 4, 98, 5 do
+        for tilex = 4, 97, 5 do
             if cE_15(tilex, tiley) then
                 FindPath(tilex, tiley + 1)
                 Sleep(300)
                 for i = 1, 5 do
-                    local tx = (tilex - 3) + i
-                    if tx <= 98 then
-                        while inv(3) < 24 do
-                            ambilSeed(3, 50)
-                            Sleep(200)
-                        end
-                        if inv(2) == 0 then
-                            plntDf_122()
-                            Sleep(200)
-                        end
-                        if GetTile(tx, tiley).fg == 0 then
-                            FindPath(tx, tiley + 1)
-                            Sleep(1000)
-                            while GetTile(tx, tiley).fg == 0 do
-                                trh1_3(tx, tiley, 2)
-                                Sleep(200)
-                            end
-                        end
+                    local tx = math.min((tilex - 3) + i, 98)  -- jangan melebihi 98
+                    while inv(3) < 24 do
+                        ambilSeed(3, 50)
+                        Sleep(200)
                     end
-                end
-            end
-        end
-
-        for tilex = 98, 4, -5 do
-            if cE_15(tilex, tiley) then
-                FindPath(tilex, tiley + 1)
-                Sleep(100)
-                for i = 1, 5 do
-                    local tx = (tilex - 3) + i
-                    if tx ~= 99 and tx ~= 100 then
-                        while inv(3) < 24 do
-                            ambilSeed(3, 50)
+                    if inv(2) == 0 then
+                        plntDf_122()
+                        Sleep(200)
+                    end
+                    if GetTile(tx, tiley).fg == 0 then
+                        FindPath(tx, tiley + 1)
+                        Sleep(200)
+                        while GetTile(tx, tiley).fg == 0 do
+                            trh1_3(tx, tiley, 2)
                             Sleep(200)
-                        end
-                        if inv(2) == 0 then
-                            plntDf_122()
-                            Sleep(200)
-                        end
-                        if GetTile(tx, tiley).fg == 0 then
-                            FindPath(tx, tiley + 1)
-                            Sleep(1000)
-                            while GetTile(tx, tiley).fg == 0 do
-                                trh1_3(tx, tiley, 2)
-                                Sleep(190)
-                            end
                         end
                     end
                 end
@@ -800,10 +780,19 @@ function AvoidError(func, ...)
     end
 end
 
--- ========== MAIN FUNCTION ==========
+
+-- Table untuk nyimpen status world yang sudah selesai
+WorldDone = {}
+
+function isWorldDone(world)
+    return WorldDone[world] == true
+end
+
+function markWorldDone(world)
+    WorldDone[world] = true
+end
 
 -- ========== MAIN FUNCTION ==========
-
 function mainDF()
     LogToConsole("`0[`9Ibay`0]`4Memulai Script Auto Dirt Farm By IBAY")
     Sleep(2000)
@@ -812,13 +801,13 @@ function mainDF()
         local worldName = WorldList[i]
         nameworld = worldName
 
-        -- cek apakah world sudah selesai
+        -- kalau world sudah selesai → skip
         if isWorldDone(worldName) then
             LogToConsole("`0[`9Ibay`0]`c[SKIP] " .. worldName .. " sudah selesai sebelumnya, lanjut world berikutnya...")
         else
             -- join world
             jn_w(worldName)
-                        Sleep(2000)
+            Sleep(2000)
 
             -- proses farming normal
             AvoidError(function()
@@ -881,7 +870,9 @@ function mainDF()
         end
     end
 end
+
 AvoidError(mainDF)
+
 
 -- ============== [[ END OF SCRIPT BY IBAY ]] ============== --
 -- Script ini dibuat oleh IBAY, Dilarang menjual ulang script ini tanpa izin pembuat.
