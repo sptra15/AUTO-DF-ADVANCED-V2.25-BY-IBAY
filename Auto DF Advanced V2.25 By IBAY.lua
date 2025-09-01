@@ -1,5 +1,5 @@
 -- ============== [[ AUTO DF SCRIPT BY IBAY ]] ============== --
--- Version: V1.25
+-- Version: V2.25
 -- Update: 02 September 2025
 -- Author: IBAY
 -- Discord: https://discord.gg/ibaysptr
