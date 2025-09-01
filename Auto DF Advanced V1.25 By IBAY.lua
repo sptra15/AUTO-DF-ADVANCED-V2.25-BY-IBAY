@@ -12,7 +12,7 @@
 -- ============== [[ PENGATURAN ]] ============== --
 -- Ganti sesuai kebutuhan, pastikan world sudah ada & benar
 
-nameworld = "uiszw" -- World tempat bot membuat Dirt Farm
+nameworld = "uozuk" -- World tempat bot membuat Dirt Farm
 StoragePlat = "ibaymart|persija28" -- World penyimpanan platform
 worldsaveseed = "hallustrg|persija28" -- World penyimpanan seed
 
@@ -495,56 +495,30 @@ end
 
 function plcDrt_2()
     for tiley = 24, 2, -2 do
-        for tilex = 4, 98, 5 do
+        for tilex = 2, 97, 5 do
             if cE_15(tilex, tiley) then
                 FindPath(tilex, tiley + 1)
                 Sleep(300)
-                for i = 1, 5 do
-                    local tx = (tilex - 3) + i
-                    if tx <= 98 then
-                        while inv(3) < 24 do
-                            ambilSeed(3, 50)
-                            Sleep(200)
-                        end
-                        if inv(2) == 0 then
-                            plntDf_122()
-                            Sleep(200)
-                        end
-                        if GetTile(tx, tiley).fg == 0 then
-                            FindPath(tx, tiley + 1)
-                            Sleep(1000)
-                            while GetTile(tx, tiley).fg == 0 do
-                                trh1_3(tx, tiley, 2)
-                                Sleep(200)
-                            end
-                        end
-                    end
-                end
-            end
-        end
 
-        for tilex = 98, 4, -5 do
-            if cE_15(tilex, tiley) then
-                FindPath(tilex, tiley + 1)
-                Sleep(100)
-                for i = 1, 5 do
-                    local tx = (tilex - 3) + i
-                    if tx ~= 99 and tx ~= 100 then
-                        while inv(3) < 24 do
-                            ambilSeed(3, 50)
+                -- letakkan 5 block berturut-turut
+                for i = 0, 4 do
+                    local tx = math.min(tilex + i, 98)  -- jangan melebihi 98
+                    while inv(3) < 24 do
+                        ambilSeed(3, 50)
+                        Sleep(200)
+                    end
+
+                    if inv(2) == 0 then
+                        plntDf_122()
+                        Sleep(200)
+                    end
+
+                    if GetTile(tx, tiley).fg == 0 then
+                        FindPath(tx, tiley + 1)
+                        Sleep(200)
+                        while GetTile(tx, tiley).fg == 0 do
+                            trh1_3(tx, tiley, 2)
                             Sleep(200)
-                        end
-                        if inv(2) == 0 then
-                            plntDf_122()
-                            Sleep(200)
-                        end
-                        if GetTile(tx, tiley).fg == 0 then
-                            FindPath(tx, tiley + 1)
-                            Sleep(1000)
-                            while GetTile(tx, tiley).fg == 0 do
-                                trh1_3(tx, tiley, 2)
-                                Sleep(190)
-                            end
                         end
                     end
                 end
@@ -740,7 +714,7 @@ function OnConnected()
     if AUTO_RECONNECT and not INTENTIONAL_DISCONNECT then
         local st = LoadState()
         if st then
-            LogToConsole("Reconnect sukses. Balik ke world " .. st.world)
+            LogToConsole(" Reconnect sukses. Balik ke world " .. st.world)
 
             -- respawn dulu biar aman
             SendPacket(2, "action|respawn")
@@ -822,4 +796,3 @@ AvoidError(mainDF)
 -- ============== [[ END OF SCRIPT BY IBAY ]] ============== --
 -- Script ini dibuat oleh IBAY, Dilarang menjual ulang script ini tanpa izin pembuat.
 -- Terimakasih sudah menggunakan script ini, semoga bermanfaat.
-
