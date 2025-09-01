@@ -1,6 +1,6 @@
 -- ============== [[ AUTO DF SCRIPT BY IBAY ]] ============== --
 -- Version: V1.25
--- Update: 01 September 2025
+-- Update: 02 September 2025
 -- Author: IBAY
 -- Discord: https://discord.gg/ibaysptr
 -- Script ini dibuat oleh IBAY, Dilarang menjual ulang script ini tanpa izin pembuat.
