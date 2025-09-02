@@ -705,7 +705,7 @@ function OnConnected()
     if AUTO_RECONNECT and not INTENTIONAL_DISCONNECT then
         local st = LoadState()
         if st then
-            LogToConsole("✅ Reconnect sukses. Balik ke world " .. st.world)
+            LogToConsole("Reconnect sukses. Balik ke world " .. st.world)
 
             -- respawn dulu biar aman
             SendPacket(2, "action|respawn")
