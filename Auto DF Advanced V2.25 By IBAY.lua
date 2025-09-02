@@ -490,7 +490,7 @@ end
 
 function plcDrt_2()
     for tiley = 24, 2, -2 do
-        for tilex = 4, 97, 5 do
+        for tilex = 2, 97, 5 do
             if cE_15(tilex, tiley) then
                 FindPath(tilex, tiley + 1)
                 Sleep(300)
